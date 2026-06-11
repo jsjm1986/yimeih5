@@ -13,6 +13,14 @@ const app = createApp({ db, uploadsDir: UPLOADS_DIR });
 const PORT = Number(process.env.PORT ?? 3000);
 app.listen(PORT, () => console.log(`server listening on :${PORT}`));
 
+function safeCleanup(): void {
+  try {
+    runCleanup(db, UPLOADS_DIR);
+  } catch (err) {
+    console.error('cleanup run failed:', (err as Error).message);
+  }
+}
+
 // 启动时跑一次，之后每天跑一次
-runCleanup(db, UPLOADS_DIR);
-setInterval(() => runCleanup(db, UPLOADS_DIR), 24 * 60 * 60 * 1000).unref();
+safeCleanup();
+setInterval(safeCleanup, 24 * 60 * 60 * 1000).unref();
