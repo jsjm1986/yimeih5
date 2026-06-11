@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import type { TaskDetail } from '@yimei/shared';
-import { getTask } from '../api.js';
+import { getTask, ApiError } from '../api.js';
 import { usePolling } from '../hooks/usePolling.js';
 
 export function WaitingPage() {
@@ -9,15 +9,19 @@ export function WaitingPage() {
   const navigate = useNavigate();
 
   const fetcher = useCallback(() => getTask(id), [id]);
-  const { data, error } = usePolling<TaskDetail>(
+  const { data, error, errorValue } = usePolling<TaskDetail>(
     fetcher,
     (d) => d.status === 'done' || d.status === 'expired',
     4000,
+    (err) => err instanceof ApiError && err.status === 404,
   );
 
-  if (data?.status === 'done') {
-    navigate(`/result/${id}`, { replace: true });
-  }
+  useEffect(() => {
+    if (data?.status === 'done') navigate(`/result/${id}`, { replace: true });
+  }, [data?.status, id, navigate]);
+
+  // 永久错误（如任务不存在）：停止等待，显示终态而非无限重试
+  const notFound = errorValue instanceof ApiError && errorValue.status === 404;
 
   return (
     <div className="page" style={{ textAlign: 'center', paddingTop: 80 }}>
@@ -25,6 +29,11 @@ export function WaitingPage() {
         <>
           <h2>图片已过期清理</h2>
           <p className="muted" style={{ marginTop: 12 }}>该任务的图片已超过保留期被清理。</p>
+        </>
+      ) : notFound ? (
+        <>
+          <h2>找不到该任务</h2>
+          <p className="muted" style={{ marginTop: 12 }}>任务可能已失效，请重新上传。</p>
         </>
       ) : (
         <>
@@ -44,7 +53,7 @@ export function WaitingPage() {
         </>
       )}
       <p className="muted" style={{ marginTop: 24 }}>
-        <a href="/history">返回历史记录</a>
+        <Link to="/history">返回历史记录</Link>
       </p>
     </div>
   );

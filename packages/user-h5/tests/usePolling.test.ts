@@ -43,4 +43,20 @@ describe('usePolling', () => {
     await vi.advanceTimersByTimeAsync(4000);
     await waitFor(() => expect(result.current.data?.status).toBe('done'));
   });
+
+  it('致命错误（isFatal 为真）停止重试并暴露 errorValue', async () => {
+    const fatal = new Error('not found');
+    const fetcher = vi.fn().mockRejectedValue(fatal);
+    const { result } = renderHook(() =>
+      usePolling(fetcher, (d: any) => d.status === 'done', 4000, () => true),
+    );
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(result.current.errorValue).toBe(fatal));
+
+    // 致命错误后不应继续重试
+    await vi.advanceTimersByTimeAsync(12000);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
 });

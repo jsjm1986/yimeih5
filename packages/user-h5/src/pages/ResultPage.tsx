@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import type { TaskDetail } from '@yimei/shared';
 import { getTask } from '../api.js';
 import { BeforeAfterSlider } from '../components/BeforeAfterSlider.js';
@@ -29,7 +29,7 @@ export function ResultPage() {
       <div className="page" style={{ textAlign: 'center', paddingTop: 60 }}>
         <h2>图片已过期清理</h2>
         <p className="muted" style={{ marginTop: 12 }}>该任务图片已超过保留期。</p>
-        <p className="muted" style={{ marginTop: 24 }}><a href="/">重新上传</a></p>
+        <p className="muted" style={{ marginTop: 24 }}><Link to="/">重新上传</Link></p>
       </div>
     );
   }
@@ -41,16 +41,16 @@ export function ResultPage() {
       <p className="muted" style={{ marginTop: 12 }}>左右拖动查看效果变化</p>
       {task.prompt && <p className="muted" style={{ marginTop: 4 }}>需求：{task.prompt}</p>}
       <div style={{ marginTop: 20, display: 'flex', gap: 12 }}>
-        <a className="btn" href="/" style={{ textAlign: 'center', textDecoration: 'none' }}>
+        <Link className="btn" to="/" style={{ textAlign: 'center', textDecoration: 'none' }}>
           再做一张
-        </a>
-        <a
+        </Link>
+        <Link
           className="btn"
-          href="/history"
+          to="/history"
           style={{ textAlign: 'center', textDecoration: 'none', background: '#888' }}
         >
           历史记录
-        </a>
+        </Link>
       </div>
     </div>
   );

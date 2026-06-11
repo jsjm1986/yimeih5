@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { createTask } from '../api.js';
 import { getDeviceId, addTaskId } from '../device.js';
 
@@ -103,7 +103,7 @@ export function UploadPage() {
         {submitting ? '提交中…' : '提交'}
       </button>
       <p className="muted" style={{ textAlign: 'center', marginTop: 12 }}>
-        <a href="/history">查看我的历史记录</a>
+        <Link to="/history">查看我的历史记录</Link>
       </p>
     </div>
   );

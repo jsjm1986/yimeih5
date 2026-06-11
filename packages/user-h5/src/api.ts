@@ -1,9 +1,19 @@
 import type { CreateTaskResponse, TaskDetail, TaskSummary } from '@yimei/shared';
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 async function asJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(body.error ?? `请求失败 (${res.status})`);
+    throw new ApiError(body.error ?? `请求失败 (${res.status})`, res.status);
   }
   return res.json() as Promise<T>;
 }
