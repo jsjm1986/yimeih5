@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { ResultUploader } from '../src/components/ResultUploader.js';
 
 function makeFile(type = 'image/png') {
@@ -18,8 +18,11 @@ describe('ResultUploader', () => {
     fireEvent.change(input, { target: { files: [makeFile()] } });
     expect(btn).not.toBeDisabled();
 
-    fireEvent.click(btn);
-    await waitFor(() => expect(onUpload).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+    expect(onUpload).toHaveBeenCalledTimes(1);
+    expect(onUpload).toHaveBeenCalledWith(expect.any(File));
   });
 
   it('非图片类型显示错误且不启用按钮', () => {

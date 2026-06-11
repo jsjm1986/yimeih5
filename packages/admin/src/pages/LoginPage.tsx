@@ -28,6 +28,7 @@ export function LoginPage() {
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
+    } finally {
       setBusy(false);
     }
   }
