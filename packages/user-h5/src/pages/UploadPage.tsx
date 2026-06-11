@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { createTask } from '../api.js';
 import { getDeviceId } from '../device.js';
+import { AppHeader } from '../components/AppHeader.js';
+import { PlusIcon, ClockIcon } from '../components/icons.js';
 
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -39,71 +41,85 @@ export function UploadPage() {
   }
 
   return (
-    <div className="page">
-      <h2 style={{ marginBottom: 12 }}>上传照片</h2>
-      <label
-        style={{
-          display: 'block',
-          aspectRatio: '3 / 4',
-          border: '2px dashed #ddd',
-          borderRadius: 12,
-          overflow: 'hidden',
-          marginBottom: 12,
-          background: '#fafafa',
-        }}
-      >
-        {preview ? (
-          <img
-            src={preview}
-            alt="预览"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <span
-            style={{
-              display: 'flex',
-              height: '100%',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#999',
-            }}
-          >
-            点击选择 / 拍摄照片
-          </span>
-        )}
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          capture="user"
-          hidden
-          onChange={onPick}
-        />
-      </label>
-
-      <textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        placeholder="描述你想要的效果，例如：双眼皮、瘦脸、隆鼻……"
-        rows={4}
-        style={{
-          width: '100%',
-          padding: 12,
-          borderRadius: 10,
-          border: '1px solid #ddd',
-          fontSize: 15,
-          marginBottom: 12,
-          resize: 'none',
-        }}
+    <>
+      <AppHeader
+        right={
+          <Link className="appbar-action" to="/history">
+            <ClockIcon />
+            历史
+          </Link>
+        }
       />
+      <div className="page">
+        <div style={{ padding: '26px 2px 22px' }}>
+          <p className="eyebrow" style={{ marginBottom: 12 }}>AI 医美效果预览</p>
+          <h1 className="display">
+            预见更美的
+            <br />
+            自己
+          </h1>
+          <p className="subtle" style={{ marginTop: 12 }}>
+            上传一张照片，描述你想要的改变，让我们为你呈现。
+          </p>
+        </div>
 
-      {error && <p style={{ color: '#e54848', marginBottom: 12 }}>{error}</p>}
+        <label className={`dropzone${preview ? ' has-image' : ''}`}>
+          {preview ? (
+            <>
+              <img src={preview} alt="预览" />
+              <span className="dropzone-change">
+                <PlusIcon />
+                点击更换照片
+              </span>
+            </>
+          ) : (
+            <span className="dropzone-empty">
+              <span className="dropzone-ring">
+                <PlusIcon />
+              </span>
+              <span>
+                <span className="dropzone-hint">点击上传 / 拍摄照片</span>
+                <br />
+                <span className="dropzone-sub">支持 jpg · png · webp，最大 10MB</span>
+              </span>
+            </span>
+          )}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            capture="user"
+            hidden
+            onChange={onPick}
+          />
+        </label>
 
-      <button className="btn" onClick={onSubmit} disabled={submitting}>
-        {submitting ? '提交中…' : '提交'}
-      </button>
-      <p className="muted" style={{ textAlign: 'center', marginTop: 12 }}>
-        <Link to="/history">查看我的历史记录</Link>
-      </p>
-    </div>
+        <div style={{ marginTop: 22 }}>
+          <label className="field-label" htmlFor="prompt">
+            需求描述
+          </label>
+          <textarea
+            id="prompt"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="描述你想要的效果，例如：双眼皮、瘦脸、隆鼻……"
+            rows={4}
+          />
+        </div>
+
+        {error && (
+          <p className="alert" style={{ marginTop: 16 }}>
+            {error}
+          </p>
+        )}
+
+        <button className="btn" onClick={onSubmit} disabled={submitting} style={{ marginTop: 24 }}>
+          {submitting ? '提交中…' : '开始预览'}
+        </button>
+
+        <p className="muted" style={{ textAlign: 'center', marginTop: 18 }}>
+          提交即表示同意将照片用于效果生成
+        </p>
+      </div>
+    </>
   );
 }

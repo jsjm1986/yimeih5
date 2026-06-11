@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import type { TaskSummary } from '@yimei/shared';
 import { listTasks } from '../api.js';
 import { getDeviceId } from '../device.js';
+import { AppHeader } from '../components/AppHeader.js';
+import { BackIcon, ChevronIcon, SparkleIcon } from '../components/icons.js';
 
 const STATUS_TEXT: Record<TaskSummary['status'], string> = {
   pending: '处理中',
@@ -16,6 +18,16 @@ function targetPath(t: TaskSummary): string {
   return `/result/${t.id}`; // expired 也进结果页，显示过期提示
 }
 
+function fmt(ts: number): string {
+  return new Date(ts).toLocaleString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
 export function HistoryPage() {
   const [tasks, setTasks] = useState<TaskSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,34 +39,62 @@ export function HistoryPage() {
   }, []);
 
   return (
-    <div className="page">
-      <h2 style={{ marginBottom: 16 }}>我的记录</h2>
-      {error && <p style={{ color: '#e54848' }}>{error}</p>}
-      {tasks && tasks.length === 0 && (
-        <p className="muted">还没有记录，<Link to="/">去上传第一张</Link></p>
-      )}
-      {tasks?.map((t) => (
-        <Link
-          key={t.id}
-          to={targetPath(t)}
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: '14px 12px',
-            borderBottom: '1px solid #eee',
-            textDecoration: 'none',
-            color: 'inherit',
-          }}
-        >
-          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {t.prompt}
-          </span>
-          <span className="muted" style={{ marginLeft: 12 }}>{STATUS_TEXT[t.status]}</span>
-        </Link>
-      ))}
-      <p className="muted" style={{ marginTop: 20, textAlign: 'center' }}>
-        <Link to="/">返回上传</Link>
-      </p>
-    </div>
+    <>
+      <AppHeader
+        right={
+          <Link className="appbar-action" to="/">
+            <BackIcon />
+            上传
+          </Link>
+        }
+      />
+      <div className="page">
+        <div style={{ padding: '22px 2px 18px' }}>
+          <p className="eyebrow" style={{ marginBottom: 10 }}>
+            MY RECORDS
+          </p>
+          <h1 className="title">我的记录</h1>
+        </div>
+
+        {error && <p className="alert">{error}</p>}
+
+        {tasks && tasks.length === 0 && (
+          <div className="empty">
+            <span className="empty-ring">
+              <SparkleIcon />
+            </span>
+            <div>
+              <p className="subtle" style={{ marginBottom: 4 }}>
+                还没有任何记录
+              </p>
+              <p className="muted">
+                <Link to="/" style={{ color: 'var(--gold-deep)' }}>
+                  去上传第一张照片
+                </Link>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {tasks && tasks.length > 0 && (
+          <div className="list">
+            {tasks.map((t) => (
+              <Link key={t.id} className="list-row" to={targetPath(t)}>
+                <div className="list-row-body">
+                  <div className="list-row-title">{t.prompt}</div>
+                  <div className="list-row-meta">
+                    <span className={`badge badge--${t.status}`}>{STATUS_TEXT[t.status]}</span>
+                    <span className="list-row-time">{fmt(t.createdAt)}</span>
+                  </div>
+                </div>
+                <span className="list-row-chevron">
+                  <ChevronIcon />
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }

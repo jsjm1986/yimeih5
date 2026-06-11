@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SliderArrows } from './icons.js';
 import './BeforeAfterSlider.css';
 
 interface Props {
@@ -18,7 +19,11 @@ export function BeforeAfterSlider({ beforeUrl, afterUrl }: Props) {
         data-testid="after-layer"
         style={{ clipPath: `inset(0 0 0 ${pos}%)` }}
       />
-      <div className="bas-handle-line" style={{ left: `${pos}%` }} />
+      <div className="bas-divider" style={{ left: `${pos}%` }}>
+        <span className="bas-knob">
+          <SliderArrows className="bas-knob-arrows" />
+        </span>
+      </div>
       <span className="bas-label before">处理前</span>
       <span className="bas-label after">处理后</span>
       <input
