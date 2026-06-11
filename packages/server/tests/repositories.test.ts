@@ -1,7 +1,18 @@
 import { describe, it, expect } from 'vitest';
+import crypto from 'node:crypto';
 import { createDb } from '../src/db.js';
 import { getRetentionDays, setRetentionDays } from '../src/repositories/settings.js';
 import { createAdmin, findAdminByUsername, verifyAdmin } from '../src/repositories/admins.js';
+import {
+  insertTask,
+  getTask,
+  listTasksByDevice,
+  listTasksByStatus,
+  listAllTasks,
+  setTaskResult,
+  listExpirableTasks,
+  markExpired,
+} from '../src/repositories/tasks.js';
 
 describe('db schema', () => {
   it('创建 tasks/admins/settings 三张表', () => {
@@ -73,5 +84,74 @@ describe('admins repository', () => {
     const db = createDb(':memory:');
     createAdmin(db, 'alice', 'a');
     expect(() => createAdmin(db, 'alice', 'b')).toThrow();
+  });
+});
+
+function seedTask(db: any, over: Partial<{ id: string; deviceId: string; prompt: string; createdAt: number }> = {}) {
+  const t = {
+    id: over.id ?? crypto.randomUUID(),
+    deviceId: over.deviceId ?? 'dev-1',
+    prompt: over.prompt ?? '瘦脸',
+    originalImage: 'orig.jpg',
+    createdAt: over.createdAt ?? Date.now(),
+  };
+  insertTask(db, t);
+  return t.id;
+}
+
+describe('tasks repository', () => {
+  it('插入后状态为 pending、可按 id 读回', () => {
+    const db = createDb(':memory:');
+    const id = seedTask(db);
+    const row = getTask(db, id);
+    expect(row?.status).toBe('pending');
+    expect(row?.original_image).toBe('orig.jpg');
+    expect(row?.result_image).toBeNull();
+  });
+
+  it('按设备查，倒序返回', () => {
+    const db = createDb(':memory:');
+    seedTask(db, { deviceId: 'dev-1', createdAt: 100 });
+    const newer = seedTask(db, { deviceId: 'dev-1', createdAt: 200 });
+    seedTask(db, { deviceId: 'dev-2', createdAt: 150 });
+    const rows = listTasksByDevice(db, 'dev-1');
+    expect(rows.map((r) => r.id)).toEqual([newer, expect.any(String)]);
+    expect(rows).toHaveLength(2);
+  });
+
+  it('按状态筛选', () => {
+    const db = createDb(':memory:');
+    const a = seedTask(db);
+    seedTask(db);
+    setTaskResult(db, a, 'res.jpg', 'alice', Date.now());
+    expect(listTasksByStatus(db, 'pending')).toHaveLength(1);
+    expect(listTasksByStatus(db, 'done')).toHaveLength(1);
+    expect(listAllTasks(db)).toHaveLength(2);
+  });
+
+  it('上传结果后状态变 done 并记录处理人/完成时间', () => {
+    const db = createDb(':memory:');
+    const id = seedTask(db);
+    setTaskResult(db, id, 'res.jpg', 'alice', 999);
+    const row = getTask(db, id)!;
+    expect(row.status).toBe('done');
+    expect(row.result_image).toBe('res.jpg');
+    expect(row.handled_by).toBe('alice');
+    expect(row.completed_at).toBe(999);
+  });
+
+  it('清理：找出早于 cutoff 且未过期的任务并标记 expired', () => {
+    const db = createDb(':memory:');
+    const old = seedTask(db, { createdAt: 1000 });
+    seedTask(db, { createdAt: 5000 });
+    const expirable = listExpirableTasks(db, 3000);
+    expect(expirable.map((r) => r.id)).toEqual([old]);
+    markExpired(db, old);
+    const row = getTask(db, old)!;
+    expect(row.status).toBe('expired');
+    expect(row.original_image).toBeNull();
+    expect(row.result_image).toBeNull();
+    // 已 expired 的不再被选中
+    expect(listExpirableTasks(db, 3000)).toHaveLength(0);
   });
 });
