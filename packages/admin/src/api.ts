@@ -12,8 +12,17 @@ export class UnauthorizedError extends Error {
   }
 }
 
+let onUnauthorized: (() => void) | null = null;
+
+export function setUnauthorizedHandler(fn: (() => void) | null): void {
+  onUnauthorized = fn;
+}
+
 async function asJson<T>(res: Response, treat401AsUnauthorized = true): Promise<T> {
-  if (res.status === 401 && treat401AsUnauthorized) throw new UnauthorizedError();
+  if (res.status === 401 && treat401AsUnauthorized) {
+    onUnauthorized?.();
+    throw new UnauthorizedError();
+  }
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(body.error ?? `请求失败 (${res.status})`);

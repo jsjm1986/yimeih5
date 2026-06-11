@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { login, fetchTasks, UnauthorizedError } from '../src/api.js';
+import { login, fetchTasks, UnauthorizedError, setUnauthorizedHandler } from '../src/api.js';
 
 function mockFetch(status: number, body: unknown) {
   return vi.fn().mockResolvedValue({
@@ -35,5 +35,14 @@ describe('admin api', () => {
       expect.stringContaining('/api/admin/tasks?status=pending'),
       expect.objectContaining({ credentials: 'include' }),
     );
+  });
+
+  it('受保护接口 401 触发 unauthorized 处理器', async () => {
+    vi.stubGlobal('fetch', mockFetch(401, { error: 'unauthorized' }));
+    const handler = vi.fn();
+    setUnauthorizedHandler(handler);
+    await expect(fetchTasks()).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(handler).toHaveBeenCalledTimes(1);
+    setUnauthorizedHandler(null);
   });
 });

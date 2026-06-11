@@ -15,11 +15,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    api.setUnauthorizedHandler(() => setUsername(null));
     api
       .me()
       .then((r) => setUsername(r.username))
       .catch(() => setUsername(null))
       .finally(() => setReady(true));
+    return () => api.setUnauthorizedHandler(null);
   }, []);
 
   return (
