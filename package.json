@@ -1,0 +1,17 @@
+{
+  "name": "yimei-h5",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "server:dev": "npm run dev -w @yimei/server",
+    "server:test": "npm run test -w @yimei/server",
+    "create-admin": "npm run create-admin -w @yimei/server --"
+  }
+}
