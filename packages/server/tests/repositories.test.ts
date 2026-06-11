@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createDb } from '../src/db.js';
 import { getRetentionDays, setRetentionDays } from '../src/repositories/settings.js';
+import { createAdmin, findAdminByUsername, verifyAdmin } from '../src/repositories/admins.js';
 
 describe('db schema', () => {
   it('创建 tasks/admins/settings 三张表', () => {
@@ -38,5 +39,39 @@ describe('settings repository', () => {
     const db = createDb(':memory:');
     db.prepare("INSERT INTO settings (key, value) VALUES ('retention_days', 'abc')").run();
     expect(getRetentionDays(db)).toBe(30);
+  });
+});
+
+describe('admins repository', () => {
+  it('创建后能按用户名查到', () => {
+    const db = createDb(':memory:');
+    const id = createAdmin(db, 'alice', 'secret123');
+    expect(id).toBeGreaterThan(0);
+    const found = findAdminByUsername(db, 'alice');
+    expect(found?.username).toBe('alice');
+    expect(found?.password_hash).not.toBe('secret123'); // 已哈希
+  });
+
+  it('正确密码校验通过', () => {
+    const db = createDb(':memory:');
+    createAdmin(db, 'alice', 'secret123');
+    expect(verifyAdmin(db, 'alice', 'secret123')?.username).toBe('alice');
+  });
+
+  it('错误密码校验失败', () => {
+    const db = createDb(':memory:');
+    createAdmin(db, 'alice', 'secret123');
+    expect(verifyAdmin(db, 'alice', 'wrong')).toBeNull();
+  });
+
+  it('用户名不存在校验失败', () => {
+    const db = createDb(':memory:');
+    expect(verifyAdmin(db, 'ghost', 'x')).toBeNull();
+  });
+
+  it('用户名唯一，重复创建抛错', () => {
+    const db = createDb(':memory:');
+    createAdmin(db, 'alice', 'a');
+    expect(() => createAdmin(db, 'alice', 'b')).toThrow();
   });
 });
