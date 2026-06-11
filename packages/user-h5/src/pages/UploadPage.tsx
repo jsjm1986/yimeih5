@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { createTask } from '../api.js';
-import { getDeviceId, addTaskId } from '../device.js';
+import { getDeviceId } from '../device.js';
 
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -31,7 +31,6 @@ export function UploadPage() {
     setError(null);
     try {
       const task = await createTask(file, prompt.trim(), getDeviceId());
-      addTaskId(task.id);
       navigate(`/waiting/${task.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : '提交失败，请重试');
