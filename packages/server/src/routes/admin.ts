@@ -6,7 +6,7 @@ import { MAX_IMAGE_BYTES, ALLOWED_MIME, SESSION_TTL_MS, SESSION_COOKIE } from '.
 import { verifyAdmin } from '../repositories/admins.js';
 import { getTask, listTasksByStatus, listAllTasks, setTaskResult } from '../repositories/tasks.js';
 import { getRetentionDays, setRetentionDays } from '../repositories/settings.js';
-import { saveImage } from '../services/storage.js';
+import { saveImage, deleteImage } from '../services/storage.js';
 import type { SessionStore } from '../services/auth.js';
 import { makeRequireAuth, type AuthedRequest } from '../middleware/requireAuth.js';
 import { toAdminTaskSummary } from './mappers.js';
@@ -69,6 +69,7 @@ export function createAdminRoutes(db: DB, uploadsDir: string, sessionStore: Sess
     const row = getTask(db, req.params.id);
     if (!row) return void res.status(404).json({ error: 'not found' });
     if (row.status === 'expired') return void res.status(409).json({ error: 'task expired' });
+    if (row.result_image) deleteImage(uploadsDir, row.result_image);
     const filename = saveImage(uploadsDir, file.buffer, file.mimetype);
     setTaskResult(db, row.id, filename, req.session!.username, Date.now());
     res.json(toAdminTaskSummary(getTask(db, row.id)!));

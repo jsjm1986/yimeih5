@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { makeTestApp, seedAdmin, PNG } from './helpers.js';
 
 async function loginAgent(app: any, db: any) {
@@ -72,6 +74,32 @@ describe('admin 任务处理流程', () => {
       .post('/api/admin/tasks/nope/result')
       .attach('image', PNG, { filename: 'r.png', contentType: 'image/png' });
     expect(res.status).toBe(404);
+  });
+
+  it('重传结果图删除旧文件，避免孤儿文件泄漏', async () => {
+    const { app, db, uploadsDir } = makeTestApp();
+    const created = await request(app)
+      .post('/api/tasks')
+      .field('prompt', '瘦脸')
+      .field('deviceId', 'dev-1')
+      .attach('image', PNG, { filename: 'a.png', contentType: 'image/png' });
+    const taskId = created.body.id;
+    const agent = await loginAgent(app, db);
+
+    const first = await agent
+      .post(`/api/admin/tasks/${taskId}/result`)
+      .attach('image', PNG, { filename: 'r1.png', contentType: 'image/png' });
+    const firstFile = first.body.resultUrl.replace('/uploads/', '');
+    expect(fs.existsSync(path.join(uploadsDir, firstFile))).toBe(true);
+
+    const second = await agent
+      .post(`/api/admin/tasks/${taskId}/result`)
+      .attach('image', PNG, { filename: 'r2.png', contentType: 'image/png' });
+    const secondFile = second.body.resultUrl.replace('/uploads/', '');
+
+    expect(secondFile).not.toBe(firstFile);
+    expect(fs.existsSync(path.join(uploadsDir, firstFile))).toBe(false); // 旧文件已删
+    expect(fs.existsSync(path.join(uploadsDir, secondFile))).toBe(true); // 新文件在
   });
 });
 
