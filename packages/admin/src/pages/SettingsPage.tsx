@@ -45,7 +45,11 @@ export function SettingsPage() {
             type="number"
             min={1}
             value={days}
-            onChange={(e) => setDays(e.target.value)}
+            onChange={(e) => {
+              setDays(e.target.value);
+              setMsg(null);
+              setError(null);
+            }}
           />
         </div>
         {error && <p style={{ color: '#e54848', marginBottom: 12 }}>{error}</p>}

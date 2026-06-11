@@ -12,9 +12,12 @@ function TopBar() {
   if (!username) return null;
 
   async function onLogout() {
-    await api.logout();
-    setUsername(null);
-    navigate('/login', { replace: true });
+    try {
+      await api.logout();
+    } finally {
+      setUsername(null);
+      navigate('/login', { replace: true });
+    }
   }
 
   return (

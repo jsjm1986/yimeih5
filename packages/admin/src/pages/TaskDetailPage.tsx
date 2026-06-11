@@ -32,7 +32,7 @@ export function TaskDetailPage() {
 
   return (
     <div className="container">
-      <button className="btn secondary" onClick={() => navigate(-1)} style={{ marginBottom: 16 }}>
+      <button className="btn secondary" onClick={() => navigate('/')} style={{ marginBottom: 16 }}>
         ← 返回列表
       </button>
       <div className="card">

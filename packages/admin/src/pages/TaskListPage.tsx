@@ -27,12 +27,23 @@ export function TaskListPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
+    setError(null);
     api
       .fetchTasks(filter === 'all' ? undefined : filter)
-      .then(setTasks)
-      .catch((e) => setError(e instanceof Error ? e.message : '加载失败'))
-      .finally(() => setLoading(false));
+      .then((t) => {
+        if (active) setTasks(t);
+      })
+      .catch((e) => {
+        if (active) setError(e instanceof Error ? e.message : '加载失败');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [filter]);
 
   return (
