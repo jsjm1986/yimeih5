@@ -31,6 +31,7 @@ export function createAdminRoutes(db: DB, uploadsDir: string, sessionStore: Sess
     res.cookie(SESSION_COOKIE, token, {
       httpOnly: true,
       sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
       maxAge: SESSION_TTL_MS,
     });
     res.json({ username: admin.username });
